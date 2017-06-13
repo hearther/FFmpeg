@@ -71,7 +71,7 @@ struct AVFilterPad {
     /**
      * AVFilterPad type.
      */
-    enum AVMediaType type;
+    enum FFMpegAVMediaType type;
 
     /**
      * Callback function to get a video buffer. If NULL, the filter system will

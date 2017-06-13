@@ -41,9 +41,10 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
-#define BUFFER_CAPACITY         (4 * 1024 * 1024)
-#define SHORT_SEEK_THRESHOLD    (256 * 1024)
+//fifo size = BUFFER_CAPACITY
+#define BUFFER_CAPACITY         (16 * 1024 * 1024) //4mb to 16mb modified by bunny
+#define SHORT_SEEK_THRESHOLD    (1024 * 1024) //0.25mb to 1mb modified by bunny
+#define ASYNC_READ_MINI_BUFF    (1024 * 1024) // 4096 to 1mb modified by bunny (0.015mb)
 
 typedef struct Context {
     AVClass        *class;
@@ -134,7 +135,7 @@ static void *async_buffer_task(void *arg)
         }
         pthread_mutex_unlock(&c->mutex);
 
-        to_copy = FFMIN(4096, fifo_space);
+        to_copy = FFMIN(ASYNC_READ_MINI_BUFF, fifo_space);
         ret = av_fifo_generic_write(fifo, c->inner, to_copy, (void *)ffurl_read);
 
         pthread_mutex_lock(&c->mutex);
