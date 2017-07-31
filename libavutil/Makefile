@@ -57,7 +57,7 @@ HEADERS = adler32.h                                                     \
           sha512.h                                                      \
           stereo3d.h                                                    \
           threadmessage.h                                               \
-          time.h                                                        \
+          avutil_time.h                                                 \
           timecode.h                                                    \
           timestamp.h                                                   \
           twofish.h                                                     \
@@ -130,7 +130,7 @@ OBJS = adler32.o                                                        \
        sha512.o                                                         \
        stereo3d.o                                                       \
        threadmessage.o                                                  \
-       time.o                                                           \
+       avutil_time.o                                                    \
        timecode.o                                                       \
        tree.o                                                           \
        twofish.o                                                        \
