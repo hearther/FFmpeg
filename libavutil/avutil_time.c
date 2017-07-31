@@ -33,7 +33,7 @@
 #include <windows.h>
 #endif
 
-#include "time.h"
+#include "avutil_time.h"
 #include "error.h"
 
 int64_t av_gettime(void)

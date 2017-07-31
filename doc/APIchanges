@@ -388,7 +388,7 @@ API changes, most recent first:
   Add avcodec_free_context(). From now on it should be used for freeing
   AVCodecContext.
 
-2014-05-17 - 0eec06e / 1bd0bdc - lavu 52.84.100 / 54.5.0 - time.h
+2014-05-17 - 0eec06e / 1bd0bdc - lavu 52.84.100 / 54.5.0 - avutil_time.h
   Add av_gettime_relative() av_gettime_relative_is_monotonic()
 
 2014-05-15 - eacf7d6 / 0c1959b - lavf 55.38.100 / 55.17.0 - avformat.h
@@ -1108,7 +1108,7 @@ lavd 54.4.100 / 54.0.0, lavfi 3.5.0
   Add av_usleep()
 
 2012-06-20 - 4da42eb / ae0a301 - lavu 51.60.100 / 51.33.0
-  Move av_gettime() to libavutil, add libavutil/time.h
+  Move av_gettime() to libavutil, add libavutil/avutil_time.h
 
 2012-06-09 - 82edf67 / 3971be0 - lavr 0.0.3
   Add a parameter to avresample_build_matrix() for Dolby/DPLII downmixing.
