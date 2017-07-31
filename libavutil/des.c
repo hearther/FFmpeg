@@ -344,7 +344,7 @@ void av_des_mac(AVDES *d, uint8_t *dst, const uint8_t *src, int count) {
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "time.h"
+#include "avutil_time.h"
 
 static uint64_t rand64(void) {
     uint64_t r = rand();
