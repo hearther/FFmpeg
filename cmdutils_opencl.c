@@ -19,7 +19,7 @@
  */
 
 #include "libavutil/opt.h"
-#include "libavutil/time.h"
+#include "libavutil/avutil_time.h"
 #include "libavutil/log.h"
 #include "libavutil/opencl.h"
 #include "libavutil/avstring.h"

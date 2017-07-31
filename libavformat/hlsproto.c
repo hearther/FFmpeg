@@ -26,7 +26,7 @@
  */
 
 #include "libavutil/avstring.h"
-#include "libavutil/time.h"
+#include "libavutil/avutil_time.h"
 #include "avformat.h"
 #include "internal.h"
 #include "url.h"

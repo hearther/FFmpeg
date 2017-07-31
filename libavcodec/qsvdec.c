@@ -30,7 +30,7 @@
 #include "libavutil/mem.h"
 #include "libavutil/log.h"
 #include "libavutil/pixfmt.h"
-#include "libavutil/time.h"
+#include "libavutil/avutil_time.h"
 
 #include "avcodec.h"
 #include "internal.h"

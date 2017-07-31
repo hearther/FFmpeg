@@ -25,7 +25,7 @@
 #include "libavutil/opt.h"
 #include "libavutil/xga_font_data.h"
 #include "libavutil/qsort.h"
-#include "libavutil/time.h"
+#include "libavutil/avutil_time.h"
 #include "libavutil/eval.h"
 #include "avfilter.h"
 #include "internal.h"

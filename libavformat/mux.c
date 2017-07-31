@@ -35,7 +35,7 @@
 #include "libavutil/internal.h"
 #include "libavutil/mathematics.h"
 #include "libavutil/parseutils.h"
-#include "libavutil/time.h"
+#include "libavutil/avutil_time.h"
 #include "riff.h"
 #include "audiointerleave.h"
 #include "url.h"

@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include "libavutil/log.h"
-#include "libavutil/time.h"
+#include "libavutil/avutil_time.h"
 
 #include "avcodec.h"
 #include "mpegvideo.h"
