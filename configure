@@ -5058,15 +5058,15 @@ check_builtin machine_rw_barrier mbarrier.h "__machine_rw_barrier()"
 check_builtin MemoryBarrier windows.h "MemoryBarrier()"
 check_builtin sarestart signal.h "SA_RESTART"
 check_builtin sync_val_compare_and_swap "" "int *ptr; int oldval, newval; __sync_val_compare_and_swap(ptr, oldval, newval)"
-check_builtin gmtime_r time.h "time_t *time; struct tm *tm; gmtime_r(time, tm)"
-check_builtin localtime_r time.h "time_t *time; struct tm *tm; localtime_r(time, tm)"
+check_builtin gmtime_r avutil_time.h "time_t *time; struct tm *tm; gmtime_r(time, tm)"
+check_builtin localtime_r avutil_time.h "time_t *time; struct tm *tm; localtime_r(time, tm)"
 
 check_func_headers malloc.h _aligned_malloc     && enable aligned_malloc
 check_func  ${malloc_prefix}memalign            && enable memalign
 check_func  ${malloc_prefix}posix_memalign      && enable posix_memalign
 
 check_func  access
-check_func_headers time.h clock_gettime || { check_func_headers time.h clock_gettime -lrt && add_extralibs -lrt && LIBRT="-lrt"; }
+check_func_headers avutil_time.h clock_gettime || { check_func_headers avutil_time.h clock_gettime -lrt && add_extralibs -lrt && LIBRT="-lrt"; }
 check_func  fcntl
 check_func  fork
 check_func  gethrtime
@@ -5079,7 +5079,7 @@ check_func  mkstemp
 check_func  mmap
 check_func  mprotect
 # Solaris has nanosleep in -lrt, OpenSolaris no longer needs that
-check_func_headers time.h nanosleep || { check_func_headers time.h nanosleep -lrt && add_extralibs -lrt && LIBRT="-lrt"; }
+check_func_headers avutil_time.h nanosleep || { check_func_headers avutil_time.h nanosleep -lrt && add_extralibs -lrt && LIBRT="-lrt"; }
 check_func  sched_getaffinity
 check_func  setrlimit
 check_struct "sys/stat.h" "struct stat" st_mtim.tv_nsec -D_BSD_SOURCE
