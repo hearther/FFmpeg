@@ -55,7 +55,6 @@ int64_t av_gettime(void)
 
 int64_t av_gettime_relative(void)
 {
-#if HAVE_CLOCK_GETTIME && defined(CLOCK_MONOTONIC)
 #ifdef __APPLE__
     if (clock_gettime)
 #endif

@@ -73,7 +73,7 @@ static int decode_packet(const AVPacket *pkt)
     return 0;
 }
 
-static int open_codec_context(AVFormatContext *fmt_ctx, enum AVMediaType type)
+static int open_codec_context(AVFormatContext *fmt_ctx, enum FFMpegAVMediaType type)
 {
     int ret;
     AVStream *st;
