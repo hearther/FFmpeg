@@ -55,6 +55,7 @@ int64_t av_gettime(void)
 
 int64_t av_gettime_relative(void)
 {
+#if HAVE_CLOCK_GETTIME && defined(CLOCK_MONOTONIC)    
 #ifdef __APPLE__
     if (clock_gettime)
 #endif
@@ -78,6 +79,7 @@ int av_gettime_relative_is_monotonic(void)
 #else
     return 0;
 #endif
+    
 }
 
 int av_usleep(unsigned usec)
