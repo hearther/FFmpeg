@@ -34,7 +34,7 @@
 static const struct {
     int pt;
     const char enc_name[6];
-    enum AVMediaType codec_type;
+    enum FFMpegAVMediaType codec_type;
     enum AVCodecID codec_id;
     int clock_rate;
     int audio_channels;
