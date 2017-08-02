@@ -204,7 +204,7 @@ enum AVMediaType {
  * Return a string describing the media_type enum, NULL if media_type
  * is unknown.
  */
-const char *av_get_media_type_string(enum AVMediaType media_type);
+const char *av_get_media_type_string(enum FFMpegAVMediaType media_type);
 
 /**
  * @defgroup lavu_const Constants

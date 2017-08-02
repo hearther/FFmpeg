@@ -382,7 +382,7 @@ static void sdp_parse_line(AVFormatContext *s, SDPParseState *s1,
     RTSPState *rt = s->priv_data;
     char buf1[64], st_type[64];
     const char *p;
-    enum AVMediaType codec_type;
+    enum FFMpegAVMediaType codec_type;
     int payload_type;
     AVStream *st;
     RTSPStream *rtsp_st;

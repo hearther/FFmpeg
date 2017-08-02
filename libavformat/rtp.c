@@ -140,7 +140,7 @@ const char *ff_rtp_enc_name(int payload_type)
     return "";
 }
 
-enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type)
+enum AVCodecID ff_rtp_codec_id(const char *buf, enum FFMpegAVMediaType codec_type)
 {
     int i;
 

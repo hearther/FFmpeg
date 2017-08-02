@@ -316,7 +316,7 @@ static int set_codec_from_probe_data(AVFormatContext *s, AVStream *st,
     static const struct {
         const char *name;
         enum AVCodecID id;
-        enum AVMediaType type;
+        enum FFMpegAVMediaType type;
     } fmt_id_type[] = {
         { "aac",       AV_CODEC_ID_AAC,        AVMEDIA_TYPE_AUDIO },
         { "ac3",       AV_CODEC_ID_AC3,        AVMEDIA_TYPE_AUDIO },
@@ -3941,7 +3941,7 @@ AVProgram *av_find_program_from_stream(AVFormatContext *ic, AVProgram *last, int
     return NULL;
 }
 
-int av_find_best_stream(AVFormatContext *ic, enum AVMediaType type,
+int av_find_best_stream(AVFormatContext *ic, enum FFMpegAVMediaType type,
                         int wanted_stream_nb, int related_stream,
                         AVCodec **decoder_ret, int flags)
 {
@@ -4794,7 +4794,7 @@ int avformat_match_stream_specifier(AVFormatContext *s, AVStream *st,
         return strtol(spec, NULL, 0) == st->index;
     else if (*spec == 'v' || *spec == 'a' || *spec == 's' || *spec == 'd' ||
              *spec == 't' || *spec == 'V') { /* opt:[vasdtV] */
-        enum AVMediaType type;
+        enum FFMpegAVMediaType type;
         int nopic = 0;
 
         switch (*spec++) {

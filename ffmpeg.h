@@ -241,7 +241,7 @@ typedef struct OutputFilter {
 
     /* temporary storage until stream maps are processed */
     AVFilterInOut       *out_tmp;
-    enum AVMediaType     type;
+    enum FFMpegAVMediaType     type;
 } OutputFilter;
 
 typedef struct FilterGraph {

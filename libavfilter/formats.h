@@ -221,7 +221,7 @@ int ff_add_format(AVFilterFormats **avff, int64_t fmt);
  * Return a list of all formats supported by FFmpeg for the given media type.
  */
 av_warn_unused_result
-AVFilterFormats *ff_all_formats(enum AVMediaType type);
+AVFilterFormats *ff_all_formats(enum FFMpegAVMediaType type);
 
 /**
  * Construct a formats list containing all planar sample formats.
@@ -238,7 +238,7 @@ AVFilterFormats *ff_planar_sample_fmts(void);
  * is returned.
  */
 AVFilterFormats *ff_merge_formats(AVFilterFormats *a, AVFilterFormats *b,
-                                  enum AVMediaType type);
+                                  enum FFMpegAVMediaType type);
 
 /**
  * Add *ref as a new reference to formats.
