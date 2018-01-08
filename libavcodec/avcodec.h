@@ -1640,6 +1640,14 @@ typedef struct AVPacket {
 #define AV_PKT_FLAG_DISCARD   0x0004
 #define AV_PKT_FLAG_NEW_SEG 0x8000 ///< The packet is the first packet from a source in concat
 
+/**
+ * Flag is used to indicate packets that contain frames that can
+ * be discarded by the decoder.  I.e. Non-reference frames.
+ */
+#define AV_PKT_FLAG_DISPOSABLE 0x0010
+
+
+
 enum AVSideDataParamChangeFlags {
     AV_SIDE_DATA_PARAM_CHANGE_CHANNEL_COUNT  = 0x0001,
     AV_SIDE_DATA_PARAM_CHANGE_CHANNEL_LAYOUT = 0x0002,

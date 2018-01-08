@@ -246,6 +246,30 @@ static int mov_write_stss_tag(AVIOContext *pb, MOVTrack *track, uint32_t flag)
     return update_size(pb, pos);
 }
 
+/* Sample dependency atom */
+static int mov_write_sdtp_tag(AVIOContext *pb, MOVTrack *track)
+{
+    int i;
+    uint8_t leading, dependent, reference, redundancy;
+    int64_t pos = avio_tell(pb);
+    avio_wb32(pb, 0); // size
+    ffio_wfourcc(pb, "sdtp");
+    avio_wb32(pb, 0); // version & flags
+    for (i = 0; i < track->entry; i++) {
+        dependent = MOV_SAMPLE_DEPENDENCY_YES;
+        leading = reference = redundancy = MOV_SAMPLE_DEPENDENCY_UNKNOWN;
+        if (track->cluster[i].flags & MOV_DISPOSABLE_SAMPLE) {
+            reference = MOV_SAMPLE_DEPENDENCY_NO;
+        }
+        if (track->cluster[i].flags & MOV_SYNC_SAMPLE) {
+            dependent = MOV_SAMPLE_DEPENDENCY_NO;
+        }
+        avio_w8(pb, (leading << 6)   | (dependent << 4) |
+                    (reference << 2) | redundancy);
+    }
+    return update_size(pb, pos);
+}
+
 static int mov_write_amr_tag(AVIOContext *pb, MOVTrack *track)
 {
     avio_wb32(pb, 0x11); /* size */
@@ -2069,6 +2093,101 @@ static int mov_write_dref_tag(AVIOContext *pb)
     return 28;
 }
 
+static int mov_preroll_write_stbl_atoms(AVIOContext *pb, MOVTrack *track)
+{
+    struct sgpd_entry {
+        int count;
+        int16_t roll_distance;
+        int group_description_index;
+    };
+
+    struct sgpd_entry *sgpd_entries = NULL;
+    int entries = -1;
+    int group = 0;
+    int i, j;
+
+    const int OPUS_SEEK_PREROLL_MS = 80;
+    int roll_samples = av_rescale_q(OPUS_SEEK_PREROLL_MS,
+                                    (AVRational){1, 1000},
+                                    (AVRational){1, 48000});
+
+    if (!track->entry)
+        return 0;
+
+    sgpd_entries = av_malloc_array(track->entry, sizeof(*sgpd_entries));
+    if (!sgpd_entries)
+        return AVERROR(ENOMEM);
+
+    av_assert0(track->par->codec_id == AV_CODEC_ID_OPUS || track->par->codec_id == AV_CODEC_ID_AAC);
+
+    if (track->par->codec_id == AV_CODEC_ID_OPUS) {
+        for (i = 0; i < track->entry; i++) {
+            int roll_samples_remaining = roll_samples;
+            int distance = 0;
+            for (j = i - 1; j >= 0; j--) {
+                roll_samples_remaining -= get_cluster_duration(track, j);
+                distance++;
+                if (roll_samples_remaining <= 0)
+                    break;
+            }
+            /* We don't have enough preceeding samples to compute a valid
+               roll_distance here, so this sample can't be independently
+               decoded. */
+            if (roll_samples_remaining > 0)
+                distance = 0;
+            /* Verify distance is a minimum of 2 (60ms) packets and a maximum of
+               32 (2.5ms) packets. */
+            av_assert0(distance == 0 || (distance >= 2 && distance <= 32));
+            if (i && distance == sgpd_entries[entries].roll_distance) {
+                sgpd_entries[entries].count++;
+            } else {
+                entries++;
+                sgpd_entries[entries].count = 1;
+                sgpd_entries[entries].roll_distance = distance;
+                sgpd_entries[entries].group_description_index = distance ? ++group : 0;
+            }
+        }
+    } else {
+        entries++;
+        sgpd_entries[entries].count = track->sample_count;
+        sgpd_entries[entries].roll_distance = 1;
+        sgpd_entries[entries].group_description_index = ++group;
+    }
+    entries++;
+
+    if (!group) {
+        av_free(sgpd_entries);
+        return 0;
+    }
+
+    /* Write sgpd tag */
+    avio_wb32(pb, 24 + (group * 2)); /* size */
+    ffio_wfourcc(pb, "sgpd");
+    avio_wb32(pb, 1 << 24); /* fullbox */
+    ffio_wfourcc(pb, "roll");
+    avio_wb32(pb, 2); /* default_length */
+    avio_wb32(pb, group); /* entry_count */
+    for (i = 0; i < entries; i++) {
+        if (sgpd_entries[i].group_description_index) {
+            avio_wb16(pb, -sgpd_entries[i].roll_distance); /* roll_distance */
+        }
+    }
+
+    /* Write sbgp tag */
+    avio_wb32(pb, 20 + (entries * 8)); /* size */
+    ffio_wfourcc(pb, "sbgp");
+    avio_wb32(pb, 0); /* fullbox */
+    ffio_wfourcc(pb, "roll");
+    avio_wb32(pb, entries); /* entry_count */
+    for (i = 0; i < entries; i++) {
+        avio_wb32(pb, sgpd_entries[i].count); /* sample_count */
+        avio_wb32(pb, sgpd_entries[i].group_description_index); /* group_description_index */
+    }
+
+    av_free(sgpd_entries);
+    return 0;
+}
+
 static int mov_write_stbl_tag(AVFormatContext *s, AVIOContext *pb, MOVMuxContext *mov, MOVTrack *track)
 {
     int64_t pos = avio_tell(pb);
@@ -2082,6 +2201,8 @@ static int mov_write_stbl_tag(AVFormatContext *s, AVIOContext *pb, MOVMuxContext
          track->par->codec_tag == MKTAG('r','t','p',' ')) &&
         track->has_keyframes && track->has_keyframes < track->entry)
         mov_write_stss_tag(pb, track, MOV_SYNC_SAMPLE);
+    if (track->par->codec_type == AVMEDIA_TYPE_VIDEO && track->has_disposable)
+        mov_write_sdtp_tag(pb, track);
     if (track->mode == MODE_MOV && track->flags & MOV_TRACK_STPS)
         mov_write_stss_tag(pb, track, MOV_PARTIAL_SYNC_SAMPLE);
     if (track->par->codec_type == AVMEDIA_TYPE_VIDEO &&
@@ -4975,6 +5096,10 @@ int ff_mov_write_packet(AVFormatContext *s, AVPacket *pkt)
         }
         if (trk->cluster[trk->entry].flags & MOV_SYNC_SAMPLE)
             trk->has_keyframes++;
+    }
+    if (pkt->flags & AV_PKT_FLAG_DISPOSABLE) {
+        trk->cluster[trk->entry].flags |= MOV_DISPOSABLE_SAMPLE;
+        trk->has_disposable++;
     }
     trk->entry++;
     trk->sample_count += samples_in_chunk;
