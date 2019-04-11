@@ -53,7 +53,7 @@ typedef struct Segment {
 
 typedef struct AdaptationSet {
     char id[10];
-    enum AVMediaType media_type;
+    enum FFMpegAVMediaType media_type;
     AVDictionary *metadata;
 } AdaptationSet;
 
@@ -431,7 +431,7 @@ static int write_adaptation_set(AVFormatContext *s, AVIOContext *out, int as_ind
     return 0;
 }
 
-static int add_adaptation_set(AVFormatContext *s, AdaptationSet **as, enum AVMediaType type)
+static int add_adaptation_set(AVFormatContext *s, AdaptationSet **as, enum FFMpegAVMediaType type)
 {
     DASHContext *c = s->priv_data;
 
@@ -516,7 +516,7 @@ static int parse_adaptation_sets(AVFormatContext *s)
 
             // if value is "a" or "v", map all streams of that type
             if (as->media_type == AVMEDIA_TYPE_UNKNOWN && (idx_str[0] == 'v' || idx_str[0] == 'a')) {
-                enum AVMediaType type = (idx_str[0] == 'v') ? AVMEDIA_TYPE_VIDEO : AVMEDIA_TYPE_AUDIO;
+                enum FFMpegAVMediaType type = (idx_str[0] == 'v') ? AVMEDIA_TYPE_VIDEO : AVMEDIA_TYPE_AUDIO;
                 av_log(s, AV_LOG_DEBUG, "Map all streams of type %s\n", idx_str);
 
                 for (i = 0; i < s->nb_streams; i++) {

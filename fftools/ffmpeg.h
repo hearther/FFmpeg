@@ -244,7 +244,7 @@ typedef struct InputFilter {
     struct InputStream *ist;
     struct FilterGraph *graph;
     uint8_t            *name;
-    enum AVMediaType    type;   // AVMEDIA_TYPE_SUBTITLE for sub2video
+    enum FFMpegAVMediaType    type;   // AVMEDIA_TYPE_SUBTITLE for sub2video
 
     AVFifoBuffer *frame_queue;
 
