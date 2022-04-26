@@ -100,7 +100,7 @@ static int cpia_decode_frame(AVCodecContext *avctx,
     }
 
     // Get buffer filled with previous frame
-    if ((ret = ff_reget_buffer(avctx, frame)) < 0)
+    if ((ret = ff_reget_buffer(avctx, frame, 0)) < 0)
         return ret;
 
 
@@ -231,4 +231,5 @@ AVCodec ff_cpia_decoder = {
     .close          = cpia_decode_end,
     .decode         = cpia_decode_frame,
     .capabilities   = AV_CODEC_CAP_DR1,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

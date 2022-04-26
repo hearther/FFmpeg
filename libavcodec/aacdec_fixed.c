@@ -70,21 +70,24 @@
 #include "fft.h"
 #include "lpc.h"
 #include "kbdwin.h"
-#include "sinewin.h"
+#include "sinewin_fixed_tablegen.h"
 
 #include "aac.h"
 #include "aactab.h"
 #include "aacdectab.h"
+#include "adts_header.h"
 #include "cbrt_data.h"
 #include "sbr.h"
 #include "aacsbr.h"
 #include "mpeg4audio.h"
-#include "aacadtsdec.h"
 #include "profiles.h"
 #include "libavutil/intfloat.h"
 
 #include <math.h>
 #include <string.h>
+
+DECLARE_ALIGNED(32, static int, AAC_RENAME2(aac_kbd_long_1024))[1024];
+DECLARE_ALIGNED(32, static int, AAC_RENAME2(aac_kbd_short_128))[128];
 
 static av_always_inline void reset_predict_state(PredictorState *ps)
 {
@@ -162,7 +165,7 @@ static void vector_pow43(int *coefs, int len)
     }
 }
 
-static void subband_scale(int *dst, int *src, int scale, int offset, int len)
+static void subband_scale(int *dst, int *src, int scale, int offset, int len, void *log_context)
 {
     int ssign = scale < 0 ? -1 : 1;
     int s = FFABS(scale);
@@ -189,7 +192,7 @@ static void subband_scale(int *dst, int *src, int scale, int offset, int len)
             dst[i] = out * (unsigned)ssign;
         }
     } else {
-        av_log(NULL, AV_LOG_ERROR, "Overflow in subband_scale()\n");
+        av_log(log_context, AV_LOG_ERROR, "Overflow in subband_scale()\n");
     }
 }
 
@@ -461,7 +464,7 @@ AVCodec ff_aac_fixed_decoder = {
         AV_SAMPLE_FMT_S32P, AV_SAMPLE_FMT_NONE
     },
     .capabilities    = AV_CODEC_CAP_CHANNEL_CONF | AV_CODEC_CAP_DR1,
-    .caps_internal   = FF_CODEC_CAP_INIT_THREADSAFE,
+    .caps_internal   = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
     .channel_layouts = aac_channel_layout,
     .profiles        = NULL_IF_CONFIG_SMALL(ff_aac_profiles),
     .flush = flush,

@@ -46,7 +46,7 @@ typedef struct MvContext {
 
 #define AUDIO_FORMAT_SIGNED 401
 
-static int mv_probe(AVProbeData *p)
+static int mv_probe(const AVProbeData *p)
 {
     if (AV_RB32(p->buf) == MKBETAG('M', 'O', 'V', 'I') &&
         AV_RB16(p->buf + 4) < 3)
@@ -216,8 +216,12 @@ static int parse_video_var(AVFormatContext *avctx, AVStream *st,
         st->codecpar->width = var_read_int(pb, size);
     } else if (!strcmp(name, "ORIENTATION")) {
         if (var_read_int(pb, size) == 1101) {
-            st->codecpar->extradata      = av_strdup("BottomUp");
-            st->codecpar->extradata_size = 9;
+            if (!st->codecpar->extradata) {
+                st->codecpar->extradata = av_strdup("BottomUp");
+                if (!st->codecpar->extradata)
+                    return AVERROR(ENOMEM);
+                st->codecpar->extradata_size = 9;
+            }
         }
     } else if (!strcmp(name, "Q_SPATIAL") || !strcmp(name, "Q_TEMPORAL")) {
         var_read_metadata(avctx, name, size);
@@ -233,7 +237,9 @@ static int read_table(AVFormatContext *avctx, AVStream *st,
                        int (*parse)(AVFormatContext *avctx, AVStream *st,
                                     const char *name, int size))
 {
-    int count, i;
+    unsigned count;
+    int i;
+
     AVIOContext *pb = avctx->pb;
     avio_skip(pb, 4);
     count = avio_rb32(pb);
@@ -241,6 +247,10 @@ static int read_table(AVFormatContext *avctx, AVStream *st,
     for (i = 0; i < count; i++) {
         char name[17];
         int size;
+
+        if (avio_feof(pb))
+            return AVERROR_EOF;
+
         avio_read(pb, name, 16);
         name[sizeof(name) - 1] = 0;
         size = avio_rb32(pb);
