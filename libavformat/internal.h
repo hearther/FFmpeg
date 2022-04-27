@@ -83,6 +83,17 @@ typedef struct FFFormatContext {
     int nb_interleaved_streams;
 
     /**
+     * Whether the timestamp shift offset has already been determined.
+     * -1: disabled, 0: not yet determined, 1: determined.
+     */
+    enum {
+        AVOID_NEGATIVE_TS_DISABLED = -1,
+        AVOID_NEGATIVE_TS_UNKNOWN  = 0,
+        AVOID_NEGATIVE_TS_KNOWN    = 1,
+    } avoid_negative_ts_status;
+#define AVOID_NEGATIVE_TS_ENABLED(status) ((status) >= 0)
+
+    /**
      * The interleavement function in use. Always set for muxers.
      */
     int (*interleave_packet)(struct AVFormatContext *s, AVPacket *pkt,
@@ -184,6 +195,11 @@ typedef struct FFFormatContext {
      * Set if chapter ids are strictly monotonic.
      */
     int chapter_ids_monotonic;
+
+    /**
+     * Contexts and child contexts do not contain a metadata option
+     */
+    int metafree;
 } FFFormatContext;
 
 static av_always_inline FFFormatContext *ffformatcontext(AVFormatContext *s)
@@ -273,6 +289,11 @@ typedef struct FFStream {
         int     fps_last_dts_idx;
 
     } *info;
+
+    AVIndexEntry *index_entries; /**< Only used if the format does not
+                                    support seeking natively. */
+    int nb_index_entries;
+    unsigned int index_entries_allocated_size;
 
     int64_t interleaver_chunk_size;
     int64_t interleaver_chunk_duration;
@@ -1018,5 +1039,25 @@ void avpriv_register_devices(const AVOutputFormat * const o[], const AVInputForm
  * be seekable.
  */
 int ff_format_shift_data(AVFormatContext *s, int64_t read_start, int shift_size);
+
+/**
+ * Rescales a timestamp and the endpoints of an interval to which the temstamp
+ * belongs, from a timebase `tb_in` to a timebase `tb_out`.
+ *
+ * The upper (lower) bound of the output interval is rounded up (down) such that
+ * the output interval always falls within the intput interval. The timestamp is
+ * rounded to the nearest integer and halfway cases away from zero, and can
+ * therefore fall outside of the output interval.
+ *
+ * Useful to simplify the rescaling of the arguments of AVInputFormat::read_seek2()
+ *
+ * @param[in] tb_in      Timebase of the input `min_ts`, `ts` and `max_ts`
+ * @param[in] tb_out     Timebase of the ouput `min_ts`, `ts` and `max_ts`
+ * @param[in,out] min_ts Lower bound of the interval
+ * @param[in,out] ts     Timestamp
+ * @param[in,out] max_ts Upper bound of the interval
+ */
+void ff_rescale_interval(AVRational tb_in, AVRational tb_out,
+                         int64_t *min_ts, int64_t *ts, int64_t *max_ts);
 
 #endif /* AVFORMAT_INTERNAL_H */
