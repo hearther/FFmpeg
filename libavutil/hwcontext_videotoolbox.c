@@ -527,6 +527,8 @@ static int vt_pixbuf_set_colorspace(void *log_ctx,
     colortrc = av_map_videotoolbox_color_trc_from_av(src->color_trc);
     if (!colortrc && src->color_trc != AVCOL_TRC_UNSPECIFIED)
         av_log(log_ctx, AV_LOG_WARNING, "Color transfer function %s is not supported.\n", av_color_transfer_name(src->color_trc));
+	av_log(log_ctx, AV_LOG_WARNING, "Color transfer function %s \n", av_color_transfer_name(src->color_trc));
+
 
     if (src->color_trc == AVCOL_TRC_GAMMA22)
         gamma = 2.2;
