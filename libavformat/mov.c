@@ -1800,6 +1800,38 @@ static int mov_read_stco(MOVContext *c, AVIOContext *pb, MOVAtom atom)
         return AVERROR_INVALIDDATA;
 
     sc->chunk_count = i;
+    //added by bunny for quick time video orientation --start
+//     av_log(c->fc, AV_LOG_TRACE, "mov_read_stco qk_video_orientation_key_idx %d sc->chunk_count %d\n", sc->qk_video_orientation_key_idx, sc->chunk_count);	
+    
+    if (sc->qk_video_orientation_found == 1 && sc->chunk_count > sc->qk_video_orientation_key_idx){
+		av_log(c->fc, AV_LOG_TRACE, "mov_read_stco here read mebx keys %d offset %"PRIx64" \n", sc->qk_video_orientation_key_idx,sc->chunk_offsets[sc->qk_video_orientation_key_idx]);		  
+		int64_t　cur_pos = avio_tell(pb);
+		// sc->chunk_offsets[sc->qk_video_orientation_key_idx];
+		unsigned int  sample_size = sc->stsz_sample_size > 0 ? sc->stsz_sample_size : sc->sample_sizes[sc->qk_video_orientation_key_idx];
+        if (sample_size > 0x3FFFFFFF) {
+        	av_log(c->fc, AV_LOG_ERROR, "Sample size %u is too large\n", sample_size);
+            return AVERROR_INVALIDDATA;
+        }
+		
+ 		  if (avio_seek(pb, sc->chunk_offsets[sc->qk_video_orientation_key_idx], SEEK_SET) == sc->chunk_offsets[sc->qk_video_orientation_key_idx]) {
+ 		  		uint8_t *buf = NULL;
+ 		  		buf = av_malloc(sample_size);
+ 		  		 if (!buf) {
+        				return AVERROR(ENOMEM);
+   				}
+    			if (avio_read(pb, buf, sample_size) < sample_size) {
+       					av_free(buf);
+        				return AVERROR_INVALIDDATA;
+    			}
+ 		  		av_log(c->fc, AV_LOG_ERROR, "set sc %p qk_video_orientation_value %d\n", sc, buf[9]);
+				sc->qk_video_orientation_value =  buf[9];
+ 		  		av_free(buf);
+ 		  		avio_seek(pb, cur_pos, SEEK_SET);
+ 		  }
+//           
+		  
+	}
+    //added by bunny for quick time video orientation --end
 
     if (pb->eof_reached)
         return AVERROR_EOF;
@@ -2143,7 +2175,68 @@ FF_ENABLE_DEPRECATION_WARNINGS
                 }
             }
         }
-    } else {
+    }
+    //added by bunny for quick time video orientation --start
+    else if (st->codecpar->codec_tag == MKTAG('m','e','b','x'))
+    {
+		if ((int)size != size)
+            return AVERROR(ENOMEM);
+            
+		av_log(c->fc, AV_LOG_TRACE,"mov_parse_stsd_data mebx to start paring video ori? size=%"PRId64" \n", av_fourcc2str(st->codecpar->codec_tag), size);
+		
+		if (size < 8) {		
+			avio_skip(pb, size);
+			av_log(c->fc, AV_LOG_TRACE,"mov_parse_stsd_data size < 8  skip\n");
+			 return 0;
+		}
+		
+		uint32_t keysSize = avio_rb32(pb);
+		uint32_t tmpType = avio_rl32(pb);
+		if (tmpType != MKTAG('k','e','y','s')) {
+			av_log(c->fc, AV_LOG_TRACE,"mov_parse_stsd_data tmpType %s  skip\n", av_fourcc2str(tmpType));
+			avio_skip(pb, size - 8);
+			 return 0;
+		}
+		avio_rb32(pb); //sub key size
+		uint32_t keysCount = avio_rb32(pb);
+		
+	    if (keysCount > UINT_MAX / sizeof(*c->meta_keys) - 1) {
+       	 av_log(c->fc, AV_LOG_ERROR,
+               "The 'keys' atom with the invalid key count: %"PRIu32"\n", keysCount);
+	        return 0;
+	    }
+	    	    
+	    //find video ori key index first	   
+	    int i = 0;
+	    for (i = 1; i <= keysCount; ++i) {
+        	uint32_t item_size = avio_rb32(pb);
+        	uint32_t item_name = avio_rl32(pb);
+        	uint32_t item_type = avio_rl32(pb);
+        	av_log(c->fc, AV_LOG_TRACE,"mov_parse_stsd_data key %d item_type %s  item_size %d\n", i, av_fourcc2str(item_type), item_size);
+        	
+        	item_size -= 12;
+        	if (item_name != MKTAG('k','e','y','d') ||
+        	    item_type != MKTAG('m','d','t','a')) {
+            	avio_skip(pb, item_size);
+        	}
+        	else {
+        		   unsigned char *keyNamespace = av_mallocz(item_size + 1);
+       	 		   if (!keyNamespace)
+            			return AVERROR(ENOMEM);
+		           avio_read(pb, keyNamespace, item_size);
+		           av_log(c->fc, AV_LOG_TRACE,"mov_parse_stsd_data key %d keyNamespace %s\n", i, keyNamespace);
+		           
+		           if (memcmp(keyNamespace, "com.apple.quicktime.video-orientation", 37) == 0){		           
+		            	sc->qk_video_orientation_key_idx = i - 1;
+		            	sc->qk_video_orientation_found = 1;
+		            	av_log(c->fc, AV_LOG_TRACE,"set sc %p qk_video_orientation_key_idx %d  qk_video_orientation_value\n", sc, i - 1);
+		           }
+		           //av_dict_set(&c->fc->metadata, key2, str, 0);
+        	}
+	    }
+     } //end of  MKTAG('m','e','b','x')
+     //added by bunny for quick time video orientation -- end
+     else {
         /* other codec type, just skip (rtp, mp4s ...) */
         avio_skip(pb, size);
     }
@@ -5565,6 +5658,9 @@ static const MOVParseTableEntry mov_default_parse_table[] = {
 { MKTAG('S','m','D','m'), mov_read_smdm },
 { MKTAG('C','o','L','L'), mov_read_coll },
 { MKTAG('v','p','c','C'), mov_read_vpcc },
+//added by bunny for quick time video orientation --start
+{ MKTAG('m','e','b','x'), mov_read_default },
+//added by bunny for quick time video orientation --end
 { 0, NULL }
 };
 
@@ -6369,6 +6465,31 @@ static int mov_read_header(AVFormatContext *s)
             break;
         }
     }
+    
+    //added by bunny for quick time video orientation --start
+    for (i = 0; i < s->nb_streams; i++) {
+        AVStream *dataSt = s->streams[i];
+        MOVStreamContext *dataSc = dataSt->priv_data;
+        if (dataSc->qk_video_orientation_found == 1 && dataSt->codecpar->codec_type == AVMEDIA_TYPE_DATA){
+            for (j = 0; j < s->nb_streams; j++) {
+                AVStream *st = s->streams[j];
+                MOVStreamContext *sc = st->priv_data;
+                if (st->codecpar->codec_type != AVMEDIA_TYPE_VIDEO){
+                    continue;
+                }
+                //             av_log(NULL, AV_LOG_ERROR, "qk_video_orientation_value %s.\n", qk_video_ori->value);
+                av_log(s, AV_LOG_ERROR, "dataSc %p dataSc->qk_video_orientation_value %d dataSc->qk_video_orientation_found %d\n", dataSc, dataSc->qk_video_orientation_value, dataSc->qk_video_orientation_found);
+                char buf[64];
+                snprintf(buf, sizeof(buf), "%g", dataSc->qk_video_orientation_value);
+                av_dict_set(&st->metadata, "video-orientation", buf, 0);
+            }
+        }
+        
+        
+                                  
+    }
+    //added by bunny for quick time video orientation --end
+  
     ff_configure_buffers_for_index(s, AV_TIME_BASE);
 
     for (i = 0; i < mov->fragment_index_count; i++) {
