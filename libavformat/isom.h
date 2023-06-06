@@ -192,6 +192,12 @@ typedef struct MOVStreamContext {
     int last_stsd_index;
     int stsd_count;
 
+    //bunny for quick time video orientation -- start
+    int qk_video_orientation_key_idx;
+    int qk_video_orientation_found;
+    int qk_video_orientation_value;
+        //bunny for quick time video orientation -- end
+
     int32_t *display_matrix;
     AVStereo3D *stereo3d;
     AVSphericalMapping *spherical;
