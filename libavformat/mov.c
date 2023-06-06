@@ -6479,9 +6479,9 @@ static int mov_read_header(AVFormatContext *s)
                 }
                 //             av_log(NULL, AV_LOG_ERROR, "qk_video_orientation_value %s.\n", qk_video_ori->value);
                 av_log(s, AV_LOG_ERROR, "dataSc %p dataSc->qk_video_orientation_value %d dataSc->qk_video_orientation_found %d\n", dataSc, dataSc->qk_video_orientation_value, dataSc->qk_video_orientation_found);
-                char buf[64];
-                snprintf(buf, sizeof(buf), "%g", dataSc->qk_video_orientation_value);
-                av_dict_set(&st->metadata, "video-orientation", buf, 0);
+                char buf[1];
+                snprintf(buf, sizeof(buf), "%d", dataSc->qk_video_orientation_value);
+                av_dict_set_int(&st->metadata, "video-orientation", dataSc->qk_video_orientation_value, 0);
             }
         }
         
