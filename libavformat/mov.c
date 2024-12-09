@@ -2754,7 +2754,7 @@ static int mov_read_stts(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     if (!sc->stts_data)
         return AVERROR(ENOMEM);
 
-    for (i = 0; i < entries && !pb->eof_reached; i++) {
+    for (i = 0; i < entries && !pb->eof_reached && !(ff_check_interrupt(&c->fc->interrupt_callback)); i++) {
         int sample_duration;
         unsigned int sample_count;
 
@@ -2829,7 +2829,7 @@ static int mov_read_ctts(MOVContext *c, AVIOContext *pb, MOVAtom atom)
     if (!sc->ctts_data)
         return AVERROR(ENOMEM);
 
-    for (i = 0; i < entries && !pb->eof_reached; i++) {
+    for (i = 0; i < entries && !pb->eof_reached && !(ff_check_interrupt(&c->fc->interrupt_callback)); i++) {
         int count    =avio_rb32(pb);
         int duration =avio_rb32(pb);
 
@@ -3507,7 +3507,7 @@ static void mov_build_index(MOVContext *mov, AVStream *st)
         }
         st->index_entries_allocated_size = (st->nb_index_entries + sc->sample_count) * sizeof(*st->index_entries);
 
-        for (i = 0; i < sc->chunk_count; i++) {
+        for (i = 0; i < sc->chunk_count && !(ff_check_interrupt(&mov->fc->interrupt_callback)); i++) {
             int64_t next_offset = i+1 < sc->chunk_count ? sc->chunk_offsets[i+1] : INT64_MAX;
             current_offset = sc->chunk_offsets[i];
             while (mov_stsc_index_valid(stsc_index, sc->stsc_count) &&
@@ -3524,7 +3524,7 @@ static void mov_build_index(MOVContext *mov, AVStream *st)
                 sc->stsz_sample_size = sc->sample_size;
             }
 
-            for (j = 0; j < sc->stsc_data[stsc_index].count; j++) {
+            for (j = 0; j < sc->stsc_data[stsc_index].count && !(ff_check_interrupt(&mov->fc->interrupt_callback)); j++) {
                 int keyframe = 0;
                 if (current_sample >= sc->sample_count) {
                     av_log(mov->fc, AV_LOG_ERROR, "wrong sample count\n");
