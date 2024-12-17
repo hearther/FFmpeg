@@ -4159,14 +4159,16 @@ int av_find_best_stream(AVFormatContext *ic, enum FFMpegAVMediaType type,
             continue;
         if (type == AVMEDIA_TYPE_AUDIO && !(par->channels && par->sample_rate))
             continue;
-        if (decoder_ret) {
+         //2024/12/17 skip can't decode stream
+        //if (decoder_ret) 
+//         {
             decoder = find_decoder(ic, st, par->codec_id);
             if (!decoder) {
                 if (ret < 0)
                     ret = AVERROR_DECODER_NOT_FOUND;
                 continue;
             }
-        }
+        //}
         disposition = !(st->disposition & (AV_DISPOSITION_HEARING_IMPAIRED | AV_DISPOSITION_VISUAL_IMPAIRED));
         count = st->codec_info_nb_frames;
         bitrate = par->bit_rate;
