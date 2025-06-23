@@ -196,8 +196,8 @@ typedef struct MOVStreamContext {
     int qk_video_orientation_key_idx;
     int qk_video_orientation_found;
     int qk_video_orientation_value;
-        //bunny for quick time video orientation -- end
-
+    //bunny for quick time video orientation -- end
+     
     int32_t *display_matrix;
     AVStereo3D *stereo3d;
     AVSphericalMapping *spherical;
@@ -272,6 +272,10 @@ typedef struct MOVContext {
     int decryption_key_len;
     int enable_drefs;
     int32_t movie_display_matrix[3][3]; ///< display matrix from mvhd
+    //added by bunny for quick time heif video orientation --start
+    int qk_video_heif_angle;
+    //added by bunny for quick time heif video orientation --end
+    
 } MOVContext;
 
 int ff_mp4_read_descr_len(AVIOContext *pb);

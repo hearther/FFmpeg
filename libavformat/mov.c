@@ -76,7 +76,11 @@ static int mov_read_default(MOVContext *c, AVIOContext *pb, MOVAtom atom);
 static int mov_read_mfra(MOVContext *c, AVIOContext *f);
 static int64_t add_ctts_entry(MOVStts** ctts_data, unsigned int* ctts_count, unsigned int* allocated_size,
                               int count, int duration);
-
+                              
+                              
+//added by bunny for quick time heif video orientation --start        
+static int mov_read_irot(MOVContext *c, AVIOContext *pb, MOVAtom atom);                 
+//added by bunny for quick time heif video orientation --end 
 static int mov_metadata_track_or_disc_number(MOVContext *c, AVIOContext *pb,
                                              unsigned len, const char *key)
 {
@@ -5661,6 +5665,9 @@ static const MOVParseTableEntry mov_default_parse_table[] = {
 //added by bunny for quick time video orientation --start
 { MKTAG('m','e','b','x'), mov_read_default },
 //added by bunny for quick time video orientation --end
+//added by bunny for quick time heif video orientation --start
+{ MKTAG('i','r','o','t'), mov_read_irot },
+//added by bunny for quick time heif video orientation --end
 { 0, NULL }
 };
 
@@ -6885,6 +6892,19 @@ static int mov_read_seek(AVFormatContext *s, int stream_index, int64_t sample_ti
             mov_current_sample_inc(sc);
         }
     }
+    return 0;
+}
+
+static int mov_read_irot(MOVContext *c, AVIOContext *pb, MOVAtom atom)
+{
+    int angle;
+
+    angle = avio_r8(pb) & 0x3;
+
+    av_log(c->fc, AV_LOG_TRACE, "irot: angle %u\n", angle);
+       // angle * 90 specifies the angle (in anti-clockwise direction)
+    // in units of degrees.                
+	c->qk_video_heif_angle =  angle * 90;    
     return 0;
 }
 
